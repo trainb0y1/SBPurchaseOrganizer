@@ -2,3 +2,6 @@
 /env
 /userSaves
 /__pycache__
+/build
+/dist
+/main.spec

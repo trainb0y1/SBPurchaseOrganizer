@@ -35,7 +35,7 @@ WARNING, THIS MAY TAKE A WHILE, so
 don't be alarmed if it seems to hang.
 Just give it time. There are thousands 
 of items on the auction house and it has a lot
-of numbers to crunch. (Generally around 47 thousand items)
+of numbers to crunch.
 
 The "Update AH Prices" and "Update BIN Prices"
 update the prices for all the items already added.
