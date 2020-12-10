@@ -13,8 +13,30 @@ import config # The config file
 helpText = """
 Help for organizer.
 
-Setup: 
-    <STUFF HERE>
+To use, just enter in a username in the username field.
+Click "Load Data"
+If the user exists, it will load the stored data,
+but if not, it will create a new user.
+
+Click "Add Item" to add a new item
+
+This program tries to come up with a reasonable
+estimate for item prices based off of the Skyblock
+auction house. These prices may be innacurate for
+less common items. 
+
+Clicking "Update AH Data" will update the 
+stored AH data.
+WARNING, THIS MAY TAKE A WHILE, so
+don't be alarmed if it seems to hang.
+Just give it time. There are thousands 
+of items on the auction house and it has a lot
+of numbers to crunch.
+
+The "Update AH Prices" and "Update BIN Prices"
+update the prices for all the items already added.
+
+Before closing, make sure to click "Save"
 
 """
 
@@ -323,7 +345,7 @@ class MainWindow(tk.Frame):
             
 
             except FileNotFoundError:
-                self.messageStrVar.set("Could not find data for user. Created new user.")
+                self.messageStrVar.set("User not found. Created new.")
                 # Create a new user ID
                 itemList = [] 
 
@@ -365,7 +387,7 @@ class PriceResultWindow(tk.Toplevel):
           
         super().__init__(master = master) 
         self.title("Price Update Results") 
-        self.geometry("360x400") 
+        self.geometry("460x400") 
         self.grid()
         self.results = results
         self.initWindow()
@@ -415,7 +437,7 @@ class DeleteItemWindow(tk.Toplevel):
         self.statusLabel.grid(row=2,columnspan=2)
 
     def submitClicked(self):
-        itemName = self.nameStrVar.get()
+        itemName = self.nameStrVar.get().lower()
         for item in self.master.itemList:
             if itemName in item["Name"].lower():
                 self.master.itemList.pop(self.master.itemList.index(item))
@@ -423,6 +445,7 @@ class DeleteItemWindow(tk.Toplevel):
                 self.destroy()
 
         # If it makes it here the item wasn't found. Alert the user
+        print(itemName)
         self.statusStrVar.set("Not Found")
 
 
@@ -496,6 +519,12 @@ class AddItemWindow(tk.Toplevel):
             AHPrice = binSearch(self.nameStrVar.get())
             AHUpdateTime = time.asctime()
         else: AHPrice, AHUpdateTime = -1,-1
+
+        if AHPrice == 0: # Impossible, bad data
+            AHPrice, AHUpdateTime = -1,-1
+        
+        if BINPrice == 0: # Impossible, bad data
+            BINPrice, BINUpdateTime = -1,-1
 
         self.master.itemList.append({
                 "Name":self.nameStrVar.get(),
