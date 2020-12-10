@@ -39,7 +39,7 @@ if not config.useColor: # for some reason, the user doesn't want colored text.
             self.BLUE, self.MAGENTA, self.CYAN, self.WHITE, self.RESET = '','','','',''
             self.DIM, self.NORMAL, self.BRIGHT, self.RESET_ALL = '','','',''
     Style, Fore, Back = placeHolder(), placeHolder(), placeHolder()
-    
+
 
 ############################## ALERT ###############################
 # if you hate camelCase, look no further, lest your brain explode. #
@@ -96,7 +96,46 @@ if not config.useColor: # for some reason, the user doesn't want colored text.
 # ]
 
 
+def updateAH():
+    """Update the AH data stored in AHData.json"""
+    print(f"{Fore.GREEN} Updating AH...")
+    data = [] # The list of individual auction items
+    currentPage = 0 # The page to get
+    while True:
+        # get all pages of ah data
 
+        pageData = requests.get(f"https://api.hypixel.net/skyblock/auctions?key={config.APIKey}&page={currentPage}").text 
+        # API Key might not be needed for this!
+
+        # Sure, I could use requests.get().json() but im not.
+
+        dec = json.JSONDecoder() #Create a json decoder
+        pageData = dec.decode(pageData) # make data a workable python object list
+
+        maxPage = pageData["totalPages"]
+
+        print(f"{Fore.GREEN}Got data for page {currentPage} of {maxPage}")
+
+        data.extend(pageData["auctions"]) # we don't care about the other stuff
+
+        if currentPage == maxPage:
+            print(f"{Fore.GREEN}Finished getting data.")
+            break
+
+
+        # time.sleep(0.6) # We don't wan't to go over the throttle limit, so just in case
+                        # Let's also make it a bit larger than it needs to be, again, just in case
+                        # though really, this is so slow, I doubt it matters.
+        # Commented out because you don't actually need to supply a valid
+        # api key, therefore you don't need to be worried about getting it banned.
+
+        currentPage += 1 # get a new page next time
+
+    with open("auctionHouse/AHData.json","w") as f: # Overwrite old data
+        json.dump(data, f) # Dump all of the data, as json again, into a file
+    with open("auctionHouse/AHLastUpdate.txt","w") as f:
+        f.write(time.asctime())
+    print("Stored auction house data sucessfully")
 
 
 def ahSearch(item):
@@ -109,7 +148,7 @@ def ahSearch(item):
     # Open AHData file and make the data a list
     with open("auctionHouse/AHData.json","r") as f:
         data = json.load(f)
-    
+
     # We now have a list of all the data. Now, search all entries for item
     matchedAuctions = []
     for auction in data:
@@ -119,7 +158,7 @@ def ahSearch(item):
                 # This will raise an error if it's not BIN
 
             except KeyError: matchedAuctions.append(auction)
-    
+
     # We now have a list of all the auctions who's name matches the desired item
     # Now, find the <num> auctions closest to ending
 
@@ -133,7 +172,7 @@ def ahSearch(item):
         price += auction["highest_bid_amount"]
 
     return price // config.ahNum # Return the average
-    
+
 
 
 def binSearch(item):
@@ -146,7 +185,7 @@ def binSearch(item):
     # Open AHData file and make the data a list
     with open("auctionHouse/AHData.json","r") as f:
         data = json.load(f)
-    
+
     # We now have a list of all the data. Now, search all entries for item
     matchedAuctions = []
     for auction in data:
@@ -157,7 +196,7 @@ def binSearch(item):
                 matchedAuctions.append(auction)
 
             except KeyError: pass
-    
+
     # We now have a list of all the BIN auctions who's name matches the desired item
     # Now, find the <num> auctions with the lowest price
 
@@ -182,7 +221,7 @@ def main():
         with open(f"userSaves/items{userID}.json","r") as f:
             itemList = json.load(f)
             print(f"{Fore.GREEN} Loaded itemlist for ID: {userID}")
-       
+
 
     except FileNotFoundError:
         if "y" in input(f"{Fore.YELLOW}User ID not found. Create new one? (y/n) ").lower():
@@ -194,10 +233,10 @@ def main():
 
             print(f"{Fore.GREEN} Created new user ID {userID}")
 
-      
+
     try: itemList # This will raise an error if no actual list was loaded
     except: sys.exit(f"{Fore.RED}No valid item list loaded") # Quit the program
-    
+
     # By now we should have a valid itemlist
     print(f"{Fore.GREEN}Press ? for a list of commands")
     while True:
@@ -212,7 +251,6 @@ Update                        : Update AH and BIN prices for all items
 Remove                        : Remove an item from the purchase list
 List (param)                  : List the items by (param)
     params: UserCost, AHCost, BINCost, Priority (case sensitive)
-
 Quit                          : Quit this program
             """)
         if "list" in cmd.lower():
@@ -239,7 +277,7 @@ Quit                          : Quit this program
                 if "y" in input(f"Really update AH data? (y/n) {Fore.YELLOW} (This may take a while) ").lower():
                     updateAH()
             else: print(f"{Fore.YELLOW}AH searching is disabled!")
-        
+
         elif cmd == "update":
             if config.ahSearch:
                 for item in itemList:
@@ -258,7 +296,7 @@ Quit                          : Quit this program
                             color = Fore.RED
                             difference = newCost - item['AHCost']
                         print(f"Difference: {color}{verb} {difference} coins")
-                        
+
                         item["AHCost"] = newCost
                         item["AHUpdateTime"] = time.asctime()
 
@@ -279,19 +317,19 @@ Quit                          : Quit this program
                             color = Fore.RED
                             difference = newCost - item['BINCost']
                         print(f"Difference: {color}{verb} {difference} coins")
-                        
+
                         item["BINCost"] = newCost
                         item["BINUpdateTime"] = time.asctime()
-                    
+
                     else: print(f"{Fore.YELLOW}Did not update BIN for {item['Name']}")
-                
+
             else: print(f"{Fore.YELLOW}AH searching is disabled!")
 
 
         elif cmd == "save":
             with open(f"userSaves/items{userID}.json","w") as f:
                 json.dump(itemList, f)
-        
+
         elif cmd == "remove":
             done = False
             itemName = input("Item to remove: ").lower()
@@ -315,7 +353,7 @@ Quit                          : Quit this program
                         priority = int(priority)
                         break # There is an integer in the range, leave the loop
                 except: print(f"{Fore.YELLOW}Invalid Integer")
-            
+
             AHPrice, BINPrice = -1,-1 # Set defaults
             AHUpdateTime, BINUpdateTime = -1, -1
 
@@ -337,7 +375,7 @@ Quit                          : Quit this program
                         print(f"{Fore.YELLOW}Discarding AH Price")
                         AHPrice = -1
                         AHUpdateTime = -1
-                
+
                 if "y" in input("Search BIN for average price? (y/n) ").lower():
                     BINPrice = binSearch(name)
                     BINUpdateTime = time.asctime()
@@ -346,7 +384,7 @@ Quit                          : Quit this program
                         print(f"{Fore.YELLOW}Discarding BIN Price")
                         BINPrice = -1
                         BINUpdateTime = -1
-                
+
             itemList.append({
                 "Name":name,
                 "Priority":priority,
@@ -357,4 +395,4 @@ Quit                          : Quit this program
                 "BINUpdateTime":BINUpdateTime
                 }) # Actually add the item to the itemlist           
 
-if __name__ == "__main__": main() # Unless someone is importing this, run main()
+if __name__ == "__main__": main() # Unless someone is importing this, run main() 
