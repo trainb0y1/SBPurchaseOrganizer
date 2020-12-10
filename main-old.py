@@ -96,46 +96,7 @@ if not config.useColor: # for some reason, the user doesn't want colored text.
 # ]
 
 
-def updateAH():
-    """Update the AH data stored in AHData.json"""
-    print(f"{Fore.GREEN} Updating AH...")
-    data = [] # The list of individual auction items
-    currentPage = 0 # The page to get
-    while True:
-        # get all pages of ah data
 
-        pageData = requests.get(f"https://api.hypixel.net/skyblock/auctions?key={config.APIKey}&page={currentPage}").text 
-        # API Key might not be needed for this!
-
-        # Sure, I could use requests.get().json() but im not.
-
-        dec = json.JSONDecoder() #Create a json decoder
-        pageData = dec.decode(pageData) # make data a workable python object list
-
-        maxPage = pageData["totalPages"]
-
-        print(f"{Fore.GREEN}Got data for page {currentPage} of {maxPage}")
-
-        data.extend(pageData["auctions"]) # we don't care about the other stuff
-
-        if currentPage == maxPage:
-            print(f"{Fore.GREEN}Finished getting data.")
-            break
-
-        
-        # time.sleep(0.6) # We don't wan't to go over the throttle limit, so just in case
-                        # Let's also make it a bit larger than it needs to be, again, just in case
-                        # though really, this is so slow, I doubt it matters.
-        # Commented out because you don't actually need to supply a valid
-        # api key, therefore you don't need to be worried about getting it banned.
-
-        currentPage += 1 # get a new page next time
-    
-    with open("auctionHouse/AHData.json","w") as f: # Overwrite old data
-        json.dump(data, f) # Dump all of the data, as json again, into a file
-    with open("auctionHouse/AHLastUpdate.txt","w") as f:
-        f.write(time.asctime())
-    print("Stored auction house data sucessfully")
 
 
 def ahSearch(item):
