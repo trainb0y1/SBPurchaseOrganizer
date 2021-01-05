@@ -16,6 +16,7 @@ APIKey = "INSERT API KEY HERE"
 useColor = True
 # Either True or False, whether or not to attempt colorful text.
 # If this program spits out a bunch of random characters, try disabling this.
+# Not implemented for the gui verson yet, sorry!
 
 
 ahSearch = True
