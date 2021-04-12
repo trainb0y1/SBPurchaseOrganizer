@@ -2,7 +2,7 @@
 
 import time, datetime, sys, json # Standard library modules
 import tkinter as tk
-import tkinter.scrolledtext as st
+from tkinter.ttk import Progressbar
 
 import requests # Import other modules
 from tabulate import tabulate # Prints data quite nicely
@@ -31,11 +31,6 @@ less common items.
 
 Clicking "Update AH Data" will update the 
 stored AH data.
-WARNING, THIS MAY TAKE A WHILE, so
-don't be alarmed if it seems to hang.
-Just give it time. There are thousands 
-of items on the auction house and it has a lot
-of numbers to crunch. (Generally around 47 thousand items)
 
 The "Update AH Prices" and "Update BIN Prices"
 update the prices for all the items already added.
@@ -119,6 +114,91 @@ def binSearch(item):
         price += auction["starting_bid"]
 
     return price // config.binNum # Return the average
+
+
+
+
+
+
+
+
+
+class LoadWindow(tk.Toplevel):
+    def __init__(self,master):
+        super().__init__(master = master) 
+        self.title("Downloading AH data") 
+        self.create_widgets()
+        self.grid()
+    
+    def create_widgets(self):
+        self.progress_StringVar = tk.StringVar()
+        self.progress_StringVar.set("Downloading Data Pages: 0/0")
+        self.progress_label = tk.Label(self,textvariable=self.progress_StringVar)
+        self.progress_label.grid(row=0,column=0)
+        self.progress_bar = Progressbar(self, orient = tk.HORIZONTAL, 
+            length = 100, mode = 'determinate') 
+        self.progress_bar.grid(row=1,column=0)
+
+        self.progress_bar['value'] = 0
+        self.load()
+    
+    def load(self):
+        data = [] # The list of individual auction items
+        currentPage = 0 # The page to get
+        while True:
+            # get all pages of ah data
+            self.update()
+                        # this forces a refresh of the screen
+                        # it DOES slow down the program, but I think its better to 
+                        # have a progress bar instead of the program just seeming to hang
+                      
+
+            pageData = requests.get(f"https://api.hypixel.net/skyblock/auctions?key={config.APIKey}&page={currentPage}").text 
+            # API Key might not be needed for this!
+
+            # Sure, I could use requests.get().json() but im not.
+
+            dec = json.JSONDecoder() #Create a json decoder
+            pageData = dec.decode(pageData) # make data a workable python object list
+
+            maxPage = pageData["totalPages"]
+
+            self.progress_StringVar.set(f"Downloading Data Pages: {currentPage}/{maxPage}")
+
+            self.progress_bar['value'] = self.progress_bar['value'] + 100/maxPage
+
+            data.extend(pageData["auctions"]) # we don't care about the other stuff
+
+            if currentPage == maxPage:
+                break
+
+            
+            # time.sleep(0.6) # We don't wan't to go over the throttle limit, so just in case
+                            # Let's also make it a bit larger than it needs to be, again, just in case
+                            # though really, this is so slow, I doubt it matters.
+            # Commented out because you don't actually need to supply a valid
+            # api key, therefore you don't need to be worried about getting it banned.
+
+            currentPage += 1 # get a new page next time
+        
+        with open("auctionHouse/AHData.json","w") as f: # Overwrite old data
+            json.dump(data, f) # Dump all of the data, as json again, into a file
+        with open("auctionHouse/AHLastUpdate.txt","w") as f:
+            f.write(time.asctime())
+
+           
+
+
+        self.destroy_button = tk.Button(self,text="OK",command=self.destroy)
+        self.destroy_button.grid(row=3)
+
+
+
+
+
+
+
+
 
 
 
@@ -288,39 +368,7 @@ class MainWindow(tk.Frame):
     def updateAH(self):
         """Update the AH data stored in AHData.json"""
         self.messageStrVar.set("Updating Auction House (this may take a while)")
-        data = [] # The list of individual auction items
-        currentPage = 0 # The page to get
-        while True:
-            # get all pages of ah data
-
-            pageData = requests.get(f"https://api.hypixel.net/skyblock/auctions?key={config.APIKey}&page={currentPage}").text 
-            # API Key might not be needed for this!
-
-            # Sure, I could use requests.get().json() but im not.
-
-            dec = json.JSONDecoder() #Create a json decoder
-            pageData = dec.decode(pageData) # make data a workable python object list
-
-            maxPage = pageData["totalPages"]
-
-            data.extend(pageData["auctions"]) # we don't care about the other stuff
-
-            if currentPage == maxPage:
-                break
-
-            
-            # time.sleep(0.6) # We don't wan't to go over the throttle limit, so just in case
-                            # Let's also make it a bit larger than it needs to be, again, just in case
-                            # though really, this is so slow, I doubt it matters.
-            # Commented out because you don't actually need to supply a valid
-            # api key, therefore you don't need to be worried about getting it banned.
-
-            currentPage += 1 # get a new page next time
-        
-        with open("auctionHouse/AHData.json","w") as f: # Overwrite old data
-            json.dump(data, f) # Dump all of the data, as json again, into a file
-        with open("auctionHouse/AHLastUpdate.txt","w") as f:
-            f.write(time.asctime())
+        LoadWindow(self.master)
 
         self.messageStrVar.set("Stored auction house data sucessfully")
         self.updateList()
