@@ -182,14 +182,8 @@ class MainWindow(tk.Frame):
         self.sortByStrVar.set("Alphabetical")
         self.sortByMenu = tk.OptionMenu(self, self.sortByStrVar, "Alphabetical","BIN Price","AH Price","User Price","Priority",command=self.updateList)
         self.sortByMenu.grid(row=1,column=7)
-        """
-        self.outputArea = st.ScrolledText(self,  
-                                      wrap = tk.WORD,      # All of this works for a vertical scrollbar, but no horiz
-                                      width = 100,  
-                                      height = 15) 
-        self.outputArea.grid(row=3,pady=10,padx=10,columnspan=6)
-        self.outputArea.configure(state ='disabled') # Read-only
-        """
+    
+
         self.outputArea = tk.Text(self,width=50,height=15,wrap="none")
         self.verticalBar = tk.Scrollbar(self,orient="vertical",command=self.outputArea.yview)
         self.horizontalBar = tk.Scrollbar(self,orient="horizontal",command=self.outputArea.xview)
@@ -547,7 +541,7 @@ class AddItemWindow(tk.Toplevel):
 if __name__ == "__main__": # as if it would never not be
     
     root = tk.Tk()
-    root.geometry('625x340')
+    root.geometry('')
     app = MainWindow(root)
     app.mainloop()
 
